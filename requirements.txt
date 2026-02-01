@@ -9,6 +9,7 @@ motor
 
 # Data Validation & Settings
 pydantic
+pydantic-settings
 python-dotenv
 
 # --- AI & PDF ---
