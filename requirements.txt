@@ -34,6 +34,7 @@ python-jose[cryptography]
 
 # Asynchronous HTTP Client for Scraping
 httpx
+playwright
 
 # HTML Parsing
 beautifulsoup4
