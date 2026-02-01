@@ -18,10 +18,15 @@ app = FastAPI(
     version=settings.PROJECT_VERSION
 )
 
-# CORS middleware - allow all origins for development
+# CORS middleware - allow only the frontend origin in production
+origins = [
+    "http://localhost:5173",  # Local development
+    "https://nexeraai.vercel.app",  # Deployed frontend
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
