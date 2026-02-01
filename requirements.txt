@@ -26,6 +26,7 @@ pypdf
 
 # Password Hashing
 passlib[bcrypt]
+bcrypt==3.2.0
 
 # JWT Handling
 python-jose[cryptography]
