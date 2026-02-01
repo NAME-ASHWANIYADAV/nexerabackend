@@ -1,0 +1,47 @@
+# Web Framework
+fastapi
+uvicorn
+
+# --- Core Functionality ---
+
+# Database (Asynchronous MongoDB Driver)
+motor
+
+# Data Validation & Settings
+pydantic
+python-dotenv
+
+# --- AI & PDF ---
+
+# Anthropic Claude API Client
+anthropic
+
+# PDF Text Extraction
+pypdf
+
+# --- Authentication & Security ---
+
+# Password Hashing
+passlib[bcrypt]
+
+# JWT Handling
+python-jose[cryptography]
+
+# --- Job Discovery & Automation ---
+
+# Asynchronous HTTP Client for Scraping
+httpx
+
+# HTML Parsing
+beautifulsoup4
+
+# Background Task Scheduling
+apscheduler
+
+# --- Rate Limiting ---
+redis
+fastapi-limiter
+
+# --- JobSpy Multi-Site Scraper ---
+python-jobspy
+lxml

@@ -1,0 +1,14 @@
+# Environments
+.env
+.venv
+venv/
+venv.bak/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Rider
+.idea/
