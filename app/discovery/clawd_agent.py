@@ -3,19 +3,19 @@
 Clawd.bot - The Job Discovery Agent
 Automatically discovers jobs from multiple sources and matches them to user profiles.
 Runs on a schedule and immediately when a new user completes onboarding.
-Sources: LinkedIn, Naukri, Indeed, Wellfound, Hirect, 150+ Career Pages
+
+Sources: 47 Remote Job Platforms (RemoteOK, Remotive, WeWorkRemotely, etc.)
+         + GitHub Job Repos, Jobright, JobSpy, Company Career Pages
 """
 import asyncio
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
 
-from app.discovery import linkedin_scraper, naukri_scraper
-from app.discovery.indeed_scraper import scrape_indeed_india
-from app.discovery.instahyre_scraper import scrape_instahyre
-from app.discovery.wellfound_scraper import scrape_wellfound
-from app.discovery.hirect_scraper import scrape_hirect
-from app.discovery.internshala_scraper import scrape_internshala
+# NEW: 47 Remote Job Platforms - Specialized Scrapers
+from app.discovery.platforms import scrape_all_47_platforms
+
+# Additional job sources
 from app.discovery.dev_boards_scraper import scrape_dev_boards
 from app.discovery.stealth_scraper import scrape_all_companies
 from app.discovery.jobright_scraper import scrape_jobright
@@ -183,88 +183,20 @@ class ClawdJobDiscoveryAgent:
 
         all_scraped_jobs = []
 
-        # 1. Scrape LinkedIn
-        print("   📋 Scraping LinkedIn...")
+        # ============================================================
+        # 1. MAIN SOURCE: 47 Remote Job Platforms (NEW Specialized Scrapers)
+        # ============================================================
+        print("   🌍 Scraping 47 Remote Job Platforms (Specialized Scrapers)...")
         try:
-            linkedin_tasks = [linkedin_scraper.scrape_linkedin(q) for q in relevant_queries[:5]]
-            linkedin_results = await asyncio.gather(*linkedin_tasks, return_exceptions=True)
-            for res in linkedin_results:
-                if isinstance(res, list):
-                    all_scraped_jobs.extend(res)
-            print(f"      Found {len([j for r in linkedin_results if isinstance(r, list) for j in r])} from LinkedIn")
+            remote_jobs = await scrape_all_47_platforms(user_keywords)
+            all_scraped_jobs.extend(remote_jobs)
+            print(f"      Found {len(remote_jobs)} from 47 Remote Platforms")
         except Exception as e:
-            print(f"      LinkedIn error: {e}")
+            print(f"      Remote Platforms error: {e}")
 
-        # 2. Scrape Naukri
-        print("   📋 Scraping Naukri...")
-        try:
-            naukri_tasks = [naukri_scraper.scrape_naukri(q) for q in relevant_queries[:5]]
-            naukri_results = await asyncio.gather(*naukri_tasks, return_exceptions=True)
-            for res in naukri_results:
-                if isinstance(res, list):
-                    all_scraped_jobs.extend(res)
-            print(f"      Found {len([j for r in naukri_results if isinstance(r, list) for j in r])} from Naukri")
-        except Exception as e:
-            print(f"      Naukri error: {e}")
-
-        # 3. Scrape Indeed India
-        print("   📋 Scraping Indeed India...")
-        try:
-            indeed_tasks = [scrape_indeed_india(q, loc) for q in relevant_queries[:3] for loc in INDIAN_LOCATIONS[:3]]
-            indeed_results = await asyncio.gather(*indeed_tasks, return_exceptions=True)
-            for res in indeed_results:
-                if isinstance(res, list):
-                    all_scraped_jobs.extend(res)
-            print(f"      Found {len([j for r in indeed_results if isinstance(r, list) for j in r])} from Indeed")
-        except Exception as e:
-            print(f"      Indeed error: {e}")
-
-        # 4. Scrape Instahyre
-        print("   📋 Scraping Instahyre...")
-        try:
-            instahyre_tasks = [scrape_instahyre(q) for q in relevant_queries[:3]]
-            instahyre_results = await asyncio.gather(*instahyre_tasks, return_exceptions=True)
-            for res in instahyre_results:
-                if isinstance(res, list):
-                    all_scraped_jobs.extend(res)
-            print(f"      Found {len([j for r in instahyre_results if isinstance(r, list) for j in r])} from Instahyre")
-        except Exception as e:
-            print(f"      Instahyre error: {e}")
-
-        # 5. Scrape Wellfound (AngelList) - Startup Jobs
-        print("   📋 Scraping Wellfound (AngelList)...")
-        try:
-            wellfound_tasks = [scrape_wellfound(q) for q in relevant_queries[:3]]
-            wellfound_results = await asyncio.gather(*wellfound_tasks, return_exceptions=True)
-            for res in wellfound_results:
-                if isinstance(res, list):
-                    all_scraped_jobs.extend(res)
-            print(f"      Found {len([j for r in wellfound_results if isinstance(r, list) for j in r])} from Wellfound")
-        except Exception as e:
-            print(f"      Wellfound error: {e}")
-
-        # 6. Scrape Hirect - Direct Founder Chat
-        print("   📋 Scraping Hirect...")
-        try:
-            hirect_tasks = [scrape_hirect(q) for q in relevant_queries[:3]]
-            hirect_results = await asyncio.gather(*hirect_tasks, return_exceptions=True)
-            for res in hirect_results:
-                if isinstance(res, list):
-                    all_scraped_jobs.extend(res)
-            print(f"      Found {len([j for r in hirect_results if isinstance(r, list) for j in r])} from Hirect")
-        except Exception as e:
-            print(f"      Hirect error: {e}")
-
-        # 7. Scrape Internshala - #1 Internship Portal in India
-        print("   📋 Scraping Internshala (Internships)...")
-        try:
-            internshala_jobs = await scrape_internshala(user_keywords)
-            all_scraped_jobs.extend(internshala_jobs)
-            print(f"      Found {len(internshala_jobs)} from Internshala")
-        except Exception as e:
-            print(f"      Internshala error: {e}")
-
-        # 8. Scrape Developer Job Boards (RemoteOK, HackerRank, CutShort, etc.)
+        # ============================================================
+        # 2. Developer-specific Job Boards
+        # ============================================================
         print("   📋 Scraping developer job boards...")
         try:
             dev_jobs = await scrape_dev_boards(user_keywords)
@@ -273,7 +205,9 @@ class ClawdJobDiscoveryAgent:
         except Exception as e:
             print(f"      Dev boards error: {e}")
 
-        # 9. Scrape 200+ Company Career Pages with STEALTH MODE
+        # ============================================================
+        # 3. Company Career Pages (Stealth Mode)
+        # ============================================================
         print("   📋 Scraping 200+ company career pages (stealth mode)...")
         try:
             career_jobs = await scrape_all_companies(user_keywords, max_companies=50)
@@ -282,7 +216,9 @@ class ClawdJobDiscoveryAgent:
         except Exception as e:
             print(f"      Career pages error: {e}")
 
-        # 10. Scrape Jobright.ai - Premium Job Discovery
+        # ============================================================
+        # 4. Jobright.ai - Premium Job Discovery
+        # ============================================================
         print("   📋 Scraping Jobright.ai (Premium jobs)...")
         try:
             jobright_jobs = await scrape_jobright(user_keywords)
@@ -291,7 +227,9 @@ class ClawdJobDiscoveryAgent:
         except Exception as e:
             print(f"      Jobright error: {e}")
 
-        # 11. Scrape GitHub Job Repos (2026 Internship/New Grad lists)
+        # ============================================================
+        # 5. GitHub Job Repos (2026 Internship/New Grad lists)
+        # ============================================================
         print("   📋 Scraping GitHub job repositories (curated lists)...")
         try:
             github_jobs = await scrape_github_jobs(user_keywords)
@@ -300,7 +238,9 @@ class ClawdJobDiscoveryAgent:
         except Exception as e:
             print(f"      GitHub jobs error: {e}")
 
-        # 12. Scrape via JobSpy (LinkedIn, Indeed, Glassdoor aggregator)
+        # ============================================================
+        # 6. JobSpy Aggregator (LinkedIn, Indeed, Glassdoor)
+        # ============================================================
         print("   📋 Scraping via JobSpy aggregator...")
         try:
             jobspy_jobs = await scrape_jobspy_all(user_keywords)
@@ -414,7 +354,7 @@ class ClawdJobDiscoveryAgent:
         """Starts the background scheduler."""
         print("🤖 Starting Clawd.bot Job Discovery Scheduler...")
         print("   - Running every 2 hours")
-        print("   - Sources: LinkedIn, Naukri, Indeed, Instahyre, Company Pages")
+        print("   - Sources: 47 Remote Platforms, GitHub Jobs, Jobright, Company Pages")
         self.scheduler.start()
 
     def stop(self):

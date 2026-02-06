@@ -144,8 +144,8 @@ async def scrape_jobspy_all(user_keywords: List[str] = None) -> List[Dict]:
             jobs = await scrape_with_jobspy(
                 search_term=term,
                 location="India",
-                sites=["linkedin", "indeed"],
-                results_per_site=10
+                sites=["linkedin", "indeed", "glassdoor"],
+                results_per_site=15
             )
             all_jobs.extend(jobs)
             print(f"      ✓ '{term}': {len(jobs)} jobs")
