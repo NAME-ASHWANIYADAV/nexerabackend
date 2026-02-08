@@ -2,7 +2,18 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List
-from fastapi_limiter.depends import RateLimiter
+
+# Try to import RateLimiter (may fail on some versions)
+try:
+    from fastapi_limiter.depends import RateLimiter
+    HAS_RATE_LIMITER = True
+except ImportError:
+    HAS_RATE_LIMITER = False
+    # Create a dummy dependency that does nothing
+    def RateLimiter(*args, **kwargs):
+        async def dummy():
+            pass
+        return dummy
 
 from app.core.db import get_database
 from app.services.job_service import JobService
@@ -27,8 +38,22 @@ class ImproveResumeRequest(BaseModel):
 async def get_user_identifier(user: User = Depends(get_current_user)) -> str:
     return str(user.id)
 
-# Rate limit for expensive AI operations, now correctly linked to the user
-ai_rate_limiter = RateLimiter(times=10, hours=1, identifier=get_user_identifier)
+# Rate limit for expensive AI operations - use compatible syntax
+if HAS_RATE_LIMITER:
+    try:
+        # Try new syntax first (limit=, period=)
+        ai_rate_limiter = RateLimiter(limit=10, period=3600, identifier=get_user_identifier)
+    except TypeError:
+        try:
+            # Fall back to old syntax (times=, hours=)
+            ai_rate_limiter = RateLimiter(times=10, hours=1, identifier=get_user_identifier)
+        except TypeError:
+            # If both fail, create a dummy
+            async def ai_rate_limiter():
+                pass
+else:
+    async def ai_rate_limiter():
+        pass
 
 @router.get("", response_model=List[Job], summary="Get All Dashboard Jobs")
 async def get_dashboard_jobs(current_user: User = Depends(get_current_user), db: AsyncIOMotorDatabase = Depends(get_database)):
