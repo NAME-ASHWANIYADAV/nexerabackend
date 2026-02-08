@@ -3,7 +3,14 @@ import redis.asyncio as redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from fastapi_limiter import FastAPILimiter
+
+# Try to import FastAPILimiter (may fail on some versions)
+try:
+    from fastapi_limiter import FastAPILimiter
+    HAS_LIMITER = True
+except ImportError:
+    HAS_LIMITER = False
+    print("⚠️ FastAPILimiter not available, rate limiting disabled")
 
 # Load environment variables from .env file for local development
 load_dotenv()
@@ -34,9 +41,14 @@ async def startup_event():
     # Connect to databases
     await connect_to_mongo()
     
-    # Initialize the rate limiter
-    redis_connection = redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
-    await FastAPILimiter.init(redis_connection)
+    # Initialize the rate limiter (if available and Redis configured)
+    if HAS_LIMITER and settings.REDIS_URL:
+        try:
+            redis_connection = redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
+            await FastAPILimiter.init(redis_connection)
+            print("✅ Rate limiter initialized")
+        except Exception as e:
+            print(f"⚠️ Rate limiter init failed: {e}")
     
     # Initialize and start the job discovery agent
     db_client = get_database_client()
@@ -55,3 +67,4 @@ app.include_router(api_router, prefix="/api")
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the AI Job Companion Backend"}
+
