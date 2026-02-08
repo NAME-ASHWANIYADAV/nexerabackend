@@ -83,6 +83,15 @@ class JobSource(str, Enum):
     INSQUAD = "insquad"
     DISTRO = "distro"
     
+    # Internship Platforms
+    UNSTOP = "unstop"
+    REMOTIVE_INTERN = "remotive_intern"
+    REMOTEOK_INTERN = "remoteok_intern"
+    LINKEDIN_INTERN = "linkedin_intern"
+    INDEED_INTERN = "indeed_intern"
+    NAUKRI_INTERN = "naukri_intern"
+    GLASSDOOR_INTERN = "glassdoor_intern"
+    
     # Catch-all for any other sources
     OTHER = "other"
 
