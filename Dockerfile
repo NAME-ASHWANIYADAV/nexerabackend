@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
 COPY . .
 
 # Expose the port Railway will assign via $PORT
-EXPOSE 8000
+EXPOSE 8080
 
 # Start the FastAPI app — Railway sets PORT env var automatically
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}
