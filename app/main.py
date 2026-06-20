@@ -25,15 +25,17 @@ app = FastAPI(
     version=settings.PROJECT_VERSION
 )
 
-# CORS middleware - allow only the frontend origin in production
-origins = ["*"]
-
+# CORS middleware - fully open for all deployment platforms
+# NOTE: allow_credentials must be False when allow_origins is ["*"]
+# per the CORS spec. This is fine because we use Bearer token auth
+# (Authorization header), not cookies, so credentials mode is not needed.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 @app.on_event("startup")
