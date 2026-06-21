@@ -61,8 +61,24 @@ async def shutdown_event():
     await close_mongo_connection()
     shutdown_agent()
 
-# The custom exception handler is removed, as this version of the library
-# raises HTTPException directly, which FastAPI handles by default.
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    # Print the full traceback to the server logs
+    traceback.print_exc()
+    # Return a 500 response with explicit CORS headers so the browser doesn't block it
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 app.include_router(api_router, prefix="/api")
 
